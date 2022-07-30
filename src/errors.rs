@@ -24,3 +24,50 @@ impl From<MinecraftProtocolError> for io::Error {
         io::Error::new(ErrorKind::InvalidData, err)
     }
 }
+
+/// An error from the RCON protocol.
+#[derive(Error, Debug)]
+pub enum RconProtocolError {
+    /// Recieved non-ASCII payload data from the server.
+    ///
+    /// Note: some servers (for example Craftbukkit for Minecraft 1.4.7) reply
+    /// with the section sign (0xa7) as a prefix for the payload. This error
+    /// will not be returned in that case.
+    #[error("non-ascii payload")]
+    NonAsciiPayload,
+
+    /// Authentication failed. You probably entered the wrong RCON password.
+    #[error("authentication failed")]
+    AuthFailed,
+
+    /// Invalid or unexpected packet type recieved from the server.
+    #[error("invalid packet type")]
+    InvalidPacketType,
+
+    /// Other kind of invalid response as defined by the spec.
+    #[error("invalid rcon response")]
+    InvalidRconResponse,
+
+    /// Payload too long.
+    ///
+    /// | Direction   | Payload Length limit |
+    /// | ----------- | -------------------- |
+    /// | Serverbound | 1446                 |
+    /// | Clientbound | 4096                 |
+    #[error("payload too long")]
+    PayloadTooLong,
+
+    /// Mismatch with the given request ID.
+    ///
+    /// Note: the server replies with a request ID of -1 in the case of an
+    /// authentication failure. In that case, `AuthFailed` will be returned.
+    /// This variant is returned if any *other* request ID was recieved.
+    #[error("request id mismatch")]
+    RequestIdMismatch,
+}
+
+impl From<RconProtocolError> for io::Error {
+    fn from(err: RconProtocolError) -> Self {
+        io::Error::new(ErrorKind::InvalidData, err)
+    }
+}
