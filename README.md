@@ -65,7 +65,7 @@ Some tests in this library require a minecraft server to be running on `localhos
 If you are contributing a feature or bugfix that involves one of these tests,
 run the convienient testing script `./test` (or `py -3 test` on Windows).
 
-This requires a decently modern version of Python 3, and a recent version of
+This requires a decently modern version of Python 3, and a recent version of java to run the server.
 
 ## License
 
@@ -83,3 +83,8 @@ at your option.
 Unless you explicitly state otherwise, any contribution intentionally submitted
 for inclusion in the work by you, as defined in the Apache-2.0 license, shall be
 dual licensed as above, without any additional terms or conditions.
+
+## Mojang
+
+This project is in no way involved with or endorsed by Mojang Synergies AB or Microsoft Corporation.
+Any use of their services (including running some tests in this library) requires you to agree to their [terms](https://minecraft.net/eula).
