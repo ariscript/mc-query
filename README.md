@@ -12,7 +12,7 @@ Maybe in the future there will be a CLI to access these features as well.
 
 ## Installation
 
-To use this library, just run `cargo add mc-query` or add `mc-query = "0.1.0"` to your `Cargo.toml`.
+To use this library, just run `cargo add mc-query`.
 
 ## Usage
 
