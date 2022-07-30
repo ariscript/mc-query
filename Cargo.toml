@@ -11,6 +11,7 @@ repository = "https://github.com/dheerajpv/mc-query"
 license = "MIT OR Apache-2.0"
 keywords = ["minecraft", "rcon", "query"]
 categories = ["api-bindings", "network-programming"]
+exclude = ["/test"]
 
 [dependencies]
 async-trait = "0.1.56"

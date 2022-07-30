@@ -5,7 +5,7 @@
 #![warn(missing_docs)]
 
 pub mod errors;
-mod packet;
+pub mod rcon;
 mod socket;
 pub mod status;
 mod varint;

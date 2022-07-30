@@ -2,7 +2,7 @@ use crate::{errors::MinecraftProtocolError, varint::VarInt};
 use bytes::{BufMut, Bytes, BytesMut};
 
 #[derive(Debug)]
-pub(crate) enum PacketId {
+pub(super) enum PacketId {
     Handshake = 0,
     Status = 1,
 }
@@ -36,7 +36,7 @@ impl From<PacketId> for VarInt {
 }
 
 #[derive(Debug)]
-pub(crate) struct Packet {
+pub(super) struct Packet {
     id: u8,
     payload: Bytes,
 }
@@ -65,7 +65,7 @@ impl From<Packet> for Bytes {
 }
 
 #[derive(Debug)]
-pub(crate) struct PacketBuilder {
+pub(super) struct PacketBuilder {
     id: PacketId,
     bytes: BytesMut,
 }
