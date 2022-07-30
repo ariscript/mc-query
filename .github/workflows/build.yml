@@ -15,7 +15,7 @@ jobs:
                   default: true
                   override: true
 
-            - run: cargo clipy -- --deny warnings
+            - run: cargo clippy -- --deny warnings
 
     test:
         runs-on: ubuntu-latest
@@ -25,7 +25,7 @@ jobs:
 
             - uses: actions-rs/toolchain@v1
               with:
-                  toolchain: true
+                  toolchain: stable
                   default: true
                   override: true
 
