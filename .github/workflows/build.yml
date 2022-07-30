@@ -1,0 +1,32 @@
+on:
+    - push
+    - pull_request
+
+jobs:
+    lint:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: stable
+                  default: true
+                  override: true
+
+            - run: cargo clipy -- --deny warnings
+
+    test:
+        runs-on: ubuntu-latest
+
+        steps:
+            - uses: actions/checkout@v3
+
+            - uses: actions-rs/toolchain@v1
+              with:
+                  toolchain: true
+                  default: true
+                  override: true
+
+            - run: ./test
