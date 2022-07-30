@@ -11,7 +11,7 @@ repository = "https://github.com/ariscript/mc-query"
 license = "MIT OR Apache-2.0"
 keywords = ["minecraft", "rcon", "query"]
 categories = ["api-bindings", "network-programming"]
-exclude = ["/test"]
+exclude = ["/test", "/resources"]
 
 [dependencies]
 async-trait = "0.1.56"
