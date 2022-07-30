@@ -1,8 +1,10 @@
 //! Implementation of the [Sever List Ping](https://wiki.vg/Server_List_Ping) protocol
 
+mod packet;
+
+use self::packet::{Packet, PacketId};
 use crate::{
     errors::MinecraftProtocolError,
-    packet::{Packet, PacketId},
     socket::{ReadWriteMinecraftString, ReadWriteVarInt},
     varint::VarInt,
 };
