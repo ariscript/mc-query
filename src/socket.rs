@@ -49,6 +49,18 @@ pub(crate) trait ReadWriteMinecraftString {
     async fn write_mc_string(&mut self, value: &str) -> Result<()>;
 }
 
+/// Trait to allow for reading and writing null terminated strings from the socket.
+#[async_trait]
+pub(crate) trait ReadWriteNullTermString {
+    /// Read a [String] from the socket.
+    /// Returns the pased value recieved from the socket in a [Result].
+    async fn read_null_terminated_string(&mut self) -> Result<String>;
+
+    /// Write a [str] ot the socket
+    /// Returns whetehr the operation was successful in a [Result].
+    async fn write_null_terminated_string(&mut self, value: &str) -> Result<()>;
+}
+
 #[async_trait]
 impl<T> ReadWriteVarInt for T
 where
@@ -94,5 +106,31 @@ where
         self.write_all(value.as_bytes()).await?;
 
         Ok(())
+    }
+}
+
+#[async_trait]
+impl<T> ReadWriteNullTermString for T
+where
+    T: AsyncReadExt + AsyncWriteExt + Unpin + Send + Sync,
+{
+    async fn read_null_terminated_string(&mut self) -> Result<String> {
+        let mut string = "".to_string();
+
+        loop {
+            let current = self.read_u8().await?;
+            if current == 0 {
+                break;
+            }
+
+            string.push(current as char);
+        }
+
+        Ok(string)
+    }
+
+    async fn write_null_terminated_string(&mut self, value: &str) -> Result<()> {
+        self.write_all(value.as_bytes()).await?;
+        self.write_u8(0).await
     }
 }

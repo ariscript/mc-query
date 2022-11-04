@@ -71,3 +71,35 @@ impl From<RconProtocolError> for io::Error {
         io::Error::new(ErrorKind::InvalidData, err)
     }
 }
+
+/// An error from the Query protocol.
+#[derive(Error, Debug)]
+pub enum QueryProtocolError {
+    /// Recieved invalid packet type.
+    /// Valid types are 9 for handshake, 0 for stat
+    #[error("invalid packet type")]
+    InvalidPacketType,
+
+    /// Unexpected packet type.
+    #[error("unexpected packet type")]
+    UnexpectedPacketType,
+
+    /// Mismatch with the generated session ID.
+    #[error("session id mismatch")]
+    SessionIdMismatch,
+
+    /// Recieved invalid challenge token from server.
+    #[error("invalid challenge token")]
+    InvalidChallengeToken,
+
+    /// Invalid integer.
+    /// Did not recieve valid characters to parse as an integer in the string
+    #[error("cannot parse int")]
+    CannotParseInt,
+}
+
+impl From<QueryProtocolError> for io::Error {
+    fn from(err: QueryProtocolError) -> Self {
+        io::Error::new(ErrorKind::InvalidData, err)
+    }
+}
