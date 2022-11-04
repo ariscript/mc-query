@@ -1,14 +1,25 @@
 #! /usr/bin/env python3
 
+from argparse import ArgumentParser
 from hashlib import sha1
 from os import mkdir
 from pathlib import Path
+from signal import SIGINT, signal
 from shutil import which
 from subprocess import PIPE, run, Popen
-from sys import stderr, exit
+from sys import argv, stderr, exit
 
 JAR_URL = "https://piston-data.mojang.com/v1/objects/8399e1211e95faa421c1507b322dbeae86d604df/server.jar"
 JAR_SHA1 = "8399e1211e95faa421c1507b322dbeae86d604df"
+
+parser = ArgumentParser(description="mc-query test utility", prog=argv[0])
+parser.add_argument(
+    "--server-only", help="runs server only, without running cargo tests"
+)
+args = parser.parse_args()
+
+if args.server_only:
+    print("running server only, not cargo tests.")
 
 print("ensuring server directory exists...")
 if not Path("server").is_dir():
@@ -51,12 +62,21 @@ process = Popen(
     text=True,
 )
 
+
+def signal_handler(_s, _f):
+    global process
+    process.kill()
+
+
+signal(SIGINT, signal_handler)
+
 for line in process.stdout:
     print(f"server log: {line}", end="")
-    if "RCON running on 0.0.0.0:25575" in line:
+    if (not args.server_only) and "RCON running on 0.0.0.0:25575" in line:
         print("server RCON is ready, starting tests")
         break
 
-run([which("cargo"), "test", "--", "--test-threads", "1", "--show-output"])
+if not args.server_only:
+    run([which("cargo"), "test", "--", "--test-threads", "1", "--show-output"])
 
 process.kill()
