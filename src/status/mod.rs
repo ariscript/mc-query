@@ -52,7 +52,7 @@ pub struct Players {
 
     /// A listing of some online Players.
     /// See [Sample] for more information.
-    pub sample: Vec<Sample>,
+    pub sample: Option<Vec<Sample>>,
 }
 
 /// A player listed on the server's list ping information.
