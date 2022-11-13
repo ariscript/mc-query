@@ -86,7 +86,7 @@ pub struct Version {
 #[serde(untagged)]
 pub enum ChatObject {
     Object(ChatComponentObject),
-    Array(Vec<ChatComponentObject>),
+    Array(Vec<ChatObject>),
     JsonPrimitive(serde_json::Value),
 }
 
