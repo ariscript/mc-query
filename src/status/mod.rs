@@ -32,11 +32,16 @@ pub struct StatusResponse {
     pub motd: ChatObject,
 
     /// URI to the server's favicon.
-    pub favicon: String,
+    pub favicon: Option<String>,
 
     /// Does the server preview chat?
     #[serde(rename = "previewsChat")]
     pub previews_chat: Option<bool>,
+
+    /// Does the server use signed chat messages?
+    /// Only returned for servers post 1.19.1
+    #[serde(rename = "enforcesSecureChat")]
+    pub enforces_secure_chat: Option<bool>,
 }
 
 /// Struct that stores information about players on the server.
@@ -158,13 +163,11 @@ pub async fn status(host: &str, port: u16) -> io::Result<StatusResponse> {
 
     // handshake packet
     // https://wiki.vg/Server_List_Ping#Handshake
-    let status_packet_id: u8 = PacketId::Status.into();
-
     let handshake = Packet::builder(PacketId::Handshake)
         .add_varint(&VarInt::from(-1))
         .add_string(host)
         .add_u16(port)
-        .add_varint(&VarInt::from(status_packet_id as i32))
+        .add_varint(&VarInt::from(PacketId::Status))
         .build();
 
     socket.write_all(&handshake.bytes()).await?;
@@ -198,6 +201,14 @@ mod tests {
     #[tokio::test]
     async fn test_hypixel_status() -> Result<()> {
         let data = status("mc.hypixel.net", 25565).await?;
+        println!("{data:#?}");
+
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn test_local_status() -> Result<()> {
+        let data = status("localhost", 25565).await?;
         println!("{data:#?}");
 
         Ok(())
