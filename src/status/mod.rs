@@ -1,4 +1,4 @@
-//! Implementation of the [Sever List Ping](https://wiki.vg/Server_List_Ping) protocol
+//! Implementation of the [Server List Ping](https://wiki.vg/Server_List_Ping) protocol
 
 mod packet;
 
@@ -29,7 +29,7 @@ pub struct StatusResponse {
 
     /// The "motd" - message shown in the server list by the client.
     #[serde(rename = "description")]
-    pub motd: String,
+    pub motd: ChatObject,
 
     /// URI to the server's favicon.
     pub favicon: String,
@@ -52,7 +52,7 @@ pub struct Players {
 
     /// A listing of some online Players.
     /// See [Sample] for more information.
-    pub sample: Vec<Sample>,
+    pub sample: Option<Vec<Sample>>,
 }
 
 /// A player listed on the server's list ping information.
@@ -79,6 +79,55 @@ pub struct Version {
     /// See [the wiki.vg page](https://wiki.vg/Protocol_version_numbers) for a
     /// reference on what versions these correspond to.
     pub protocol: u16,
+}
+
+/// The ChatObject, this is contained within the motd for a server.
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ChatObject {
+    Object(ChatComponentObject),
+    Array(Vec<ChatObject>),
+    JsonPrimitive(serde_json::Value),
+}
+
+/// A piece of a `ChatObject`
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChatComponentObject {
+    pub text: Option<String>,
+    pub translate: Option<String>,
+    pub keybind: Option<String>,
+    pub bold: Option<bool>,
+    pub italic: Option<bool>,
+    pub underlined: Option<bool>,
+    pub strikethrough: Option<bool>,
+    pub obfuscated: Option<bool>,
+    pub font: Option<String>,
+    pub color: Option<String>,
+    pub insertion: Option<String>,
+    #[serde(rename = "clickEvent")]
+    pub click_event: Option<ChatClickEvent>,
+    #[serde(rename = "hoverEvent")]
+    pub hover_event: Option<ChatHoverEvent>,
+    pub extra: Option<Vec<ChatObject>>,
+}
+
+/// ClickEvent data for a chat component
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChatClickEvent {
+    // These are not renamed on purpose.
+    pub open_url: Option<String>,
+    pub run_command: Option<String>,
+    pub suggest_command: Option<String>,
+    pub copy_to_clipboard: Option<String>,
+}
+
+/// HoverEvent data for a chat component
+#[derive(Debug, Serialize, Deserialize)]
+pub struct ChatHoverEvent {
+    // These are not renamed on purpose.
+    pub show_text: Option<Box<ChatObject>>,
+    pub show_item: Option<String>,
+    pub show_entity: Option<String>,
 }
 
 /// Ping the server for information following the [Server List Ping](https://wiki.vg/Server_List_Ping) protocol.
