@@ -72,6 +72,21 @@ async fn main() -> Result<()> {
 }
 ```
 
+### Using `stat_full` to query the server
+
+```rs
+use mc_query::query;
+use tokio;:io::Result;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let res = stat_full("localhost", 25565).await?;
+    println!("Online players: {:#?}, res.players);
+    
+    Ok(())
+}
+```
+
 ## Reference
 
 -   [wiki.vg](https://wiki.vg) - documentation of the various protocols implemented in this crate
