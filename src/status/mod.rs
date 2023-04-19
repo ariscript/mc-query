@@ -162,7 +162,6 @@ pub struct ChatComponentObject {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ChatClickEvent {
     // These are not renamed on purpose. (server returns them in snake_case)
-
     /// Opens the URL in the user's default browser. Protocol must be `http` or `https`
     pub open_url: Option<String>,
 
@@ -186,7 +185,6 @@ pub struct ChatClickEvent {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ChatHoverEvent {
     // These are not renamed on purpose. (server returns them in snake_case)
-
     /// Text to show when the item is hovered over
     pub show_text: Option<Box<ChatObject>>,
 
