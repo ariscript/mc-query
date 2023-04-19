@@ -53,7 +53,24 @@ async fn main() -> Result<()> {
 }
 ```
 
-(Query still under development...)
+### Using `stat_basic` to query the server
+
+```rs
+use mc_query::query;
+use tokio;:io::Result;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let res = stat_basic("localhost", 25565).await?;
+    println!(
+       "Server has {} out of {} players online",
+       res.num_players,
+       res.max_players
+    );
+    
+    Ok(())
+}
+```
 
 ## Reference
 
@@ -66,7 +83,7 @@ If you are contributing a feature or bugfix that involves one of these tests,
 run the convienient testing script `./test` (or `py -3 test` on Windows).
 You can also just run a minecraft server without the cargo tests (useful for debugging with IDEs) with `./test --server-only true`.
 
-This requires a decently modern version of Python 3, and a recent version of java to run the server.
+This requires a decently modern version of Python 3, and Java 17 or higher to run the server.
 
 ## License
 
