@@ -14,10 +14,10 @@ categories = ["api-bindings", "network-programming"]
 exclude = ["/test", "/resources"]
 
 [dependencies]
-async-trait = "0.1.56"
-bytes = { version = "1.2.0", features = ["serde"] }
+async-trait = "0.1.68"
+bytes = { version = "1.4.0", features = ["serde"] }
 rand = "0.8.5"
-serde = { version = "1.0.140", features = ["derive"] }
-serde_json = "1.0.82"
-thiserror = "1.0.31"
-tokio = { version = "1.20.0", features = ["full"] }
+serde = { version = "1.0.160", features = ["derive"] }
+serde_json = "1.0.96"
+thiserror = "1.0.40"
+tokio = { version = "1.27.0", features = ["full"] }
