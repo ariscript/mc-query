@@ -1,6 +1,6 @@
 [package]
 name = "mc-query"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 authors = ["Ari Prakash"]
 description = "Implementations of Server List Ping, Query, and RCON for minecraft servers"
