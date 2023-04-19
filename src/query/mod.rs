@@ -3,8 +3,10 @@
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use rand::random;
 use std::collections::HashMap;
+use std::time::Duration;
 use tokio::io;
 use tokio::net::UdpSocket;
+use tokio::time::timeout;
 
 use crate::errors::QueryProtocolError;
 
@@ -114,7 +116,22 @@ pub async fn stat_basic(host: &str, port: u16) -> io::Result<BasicStatResponse> 
     bytes.put_i32(token);
     socket.send(&bytes).await?;
 
-    let mut res = recv_packet(&socket).await?;
+    let t = timeout(Duration::from_millis(250), recv_packet(&socket)).await;
+    let mut res = match t {
+        Ok(result) => result?,
+        Err(_) => {
+            // super unlucky time of challenge token expiring before we can use it
+            // must retry handshake and request
+            let (token, session) = handshake(&socket).await?;
+            let mut bytes = BytesMut::new();
+            bytes.put_u16(QUERY_MAGIC);
+            bytes.put_u8(0); // packet type 0 - stat
+            bytes.put_i32(session);
+            bytes.put_i32(token);
+            timeout(Duration::from_millis(250), recv_packet(&socket)).await??
+        }
+    };
+
     validate_packet(&mut res, 0, session)?;
 
     let motd = get_string(&mut res)?;
@@ -177,7 +194,22 @@ pub async fn stat_full(host: &str, port: u16) -> io::Result<FullStatResponse> {
     bytes.put_u32(0); // 4 extra bytes required for full stat vs. basic
     socket.send(&bytes).await?;
 
-    let mut res = recv_packet(&socket).await?;
+    let t = timeout(Duration::from_millis(250), recv_packet(&socket)).await;
+    let mut res = match t {
+        Ok(result) => result?,
+        Err(_) => {
+            // super unlucky time of challenge token expiring before we can use it
+            // must retry handshake and request
+            let (token, session) = handshake(&socket).await?;
+            let mut bytes = BytesMut::new();
+            bytes.put_u16(QUERY_MAGIC);
+            bytes.put_u8(0); // packet type 0 - stat
+            bytes.put_i32(session);
+            bytes.put_i32(token);
+            bytes.put_u32(0); // 4 extra bytes required for full stat vs. basic
+            timeout(Duration::from_millis(250), recv_packet(&socket)).await??
+        }
+    };
     validate_packet(&mut res, 0, session)?;
 
     // skip 11 meaningless padding bytes
