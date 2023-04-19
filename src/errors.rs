@@ -10,11 +10,11 @@ pub enum MinecraftProtocolError {
     #[error("invalid varint data")]
     InvalidVarInt,
 
-    /// Recieved invalid state information from the server.
+    /// Received invalid state information from the server.
     #[error("invalid state")]
     InvalidState,
 
-    /// Recieved incorrectly formatted status response from the server.
+    /// Received incorrectly formatted status response from the server.
     #[error("invalid status response")]
     InvalidStatusResponse,
 }
@@ -28,7 +28,7 @@ impl From<MinecraftProtocolError> for io::Error {
 /// An error from the RCON protocol.
 #[derive(Error, Debug)]
 pub enum RconProtocolError {
-    /// Recieved non-ASCII payload data from the server.
+    /// Received non-ASCII payload data from the server.
     ///
     /// Note: some servers (for example Craftbukkit for Minecraft 1.4.7) reply
     /// with the section sign (0xa7) as a prefix for the payload. This error
@@ -40,7 +40,7 @@ pub enum RconProtocolError {
     #[error("authentication failed")]
     AuthFailed,
 
-    /// Invalid or unexpected packet type recieved from the server.
+    /// Invalid or unexpected packet type received from the server.
     #[error("invalid packet type")]
     InvalidPacketType,
 
@@ -61,7 +61,7 @@ pub enum RconProtocolError {
     ///
     /// Note: the server replies with a request ID of -1 in the case of an
     /// authentication failure. In that case, `AuthFailed` will be returned.
-    /// This variant is returned if any *other* request ID was recieved.
+    /// This variant is returned if any *other* request ID was received.
     #[error("request id mismatch")]
     RequestIdMismatch,
 }
@@ -75,7 +75,7 @@ impl From<RconProtocolError> for io::Error {
 /// An error from the Query protocol.
 #[derive(Error, Debug)]
 pub enum QueryProtocolError {
-    /// Recieved invalid packet type.
+    /// Received invalid packet type.
     /// Valid types are 9 for handshake, 0 for stat
     #[error("invalid packet type")]
     InvalidPacketType,
@@ -88,19 +88,24 @@ pub enum QueryProtocolError {
     #[error("session id mismatch")]
     SessionIdMismatch,
 
-    /// Recieved invalid challenge token from server.
+    /// Received invalid challenge token from server.
     #[error("invalid challenge token")]
     InvalidChallengeToken,
 
     /// Invalid integer.
-    /// Did not recieve valid characters to parse as an integer in the string
+    /// Did not receive valid characters to parse as an integer in the string
     #[error("cannot parse int")]
     CannotParseInt,
 
     /// Invalid UTF8.
-    /// Did not recieve valid UTF from the server when a string was expected
+    /// Did not receive valid UTF from the server when a string was expected
     #[error("invalid UTF-8")]
     InvalidUtf8,
+
+    /// Invalid key/value section.
+    /// Expecting something like [this](https://wiki.vg/Query#K.2C_V_section)
+    #[error("invalid key/value section")]
+    InvalidKeyValueSection,
 }
 
 impl From<QueryProtocolError> for io::Error {

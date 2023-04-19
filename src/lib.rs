@@ -3,6 +3,7 @@
 //! Minecraft networking protocol.
 
 #![warn(missing_docs)]
+#![allow(clippy::pedantic)]
 
 pub mod errors;
 pub mod query;
