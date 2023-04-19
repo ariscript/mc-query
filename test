@@ -77,6 +77,6 @@ for line in process.stdout:
         break
 
 if not args.server_only:
-    run([which("cargo"), "test", "--", "--test-threads", "1", "--show-output"])
+    run([which("cargo"), "test", "--", "--show-output"])
 
 process.kill()
