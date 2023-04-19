@@ -96,6 +96,11 @@ pub enum QueryProtocolError {
     /// Did not recieve valid characters to parse as an integer in the string
     #[error("cannot parse int")]
     CannotParseInt,
+
+    /// Invalid UTF8.
+    /// Did not recieve valid UTF from the server when a string was expected
+    #[error("invalid UTF-8")]
+    InvalidUtf8,
 }
 
 impl From<QueryProtocolError> for io::Error {
