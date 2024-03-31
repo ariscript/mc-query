@@ -2,12 +2,12 @@
 name = "mc-query"
 version = "1.0.1"
 edition = "2021"
-authors = ["Dheeraj Prakash"]
+authors = ["Ari Prakash"]
 description = "Implementations of Server List Ping, Query, and RCON for minecraft servers"
 documentation = "https://docs.rs/mc-query"
 readme = "README.md"
-homepage = "https://github.com/dheerajpv/mc-query"
-repository = "https://github.com/dheerajpv/mc-query"
+homepage = "https://github.com/starmut/mc-query"
+repository = "https://github.com/starmut/mc-query"
 license = "MIT OR Apache-2.0"
 keywords = ["minecraft", "rcon", "query"]
 categories = ["api-bindings", "network-programming"]
