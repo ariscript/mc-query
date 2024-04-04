@@ -9,8 +9,8 @@ from shutil import which
 from subprocess import PIPE, run, Popen
 from sys import argv, stderr, exit
 
-JAR_URL = "https://piston-data.mojang.com/v1/objects/8f3112a1049751cc472ec13e397eade5336ca7ae/server.jar"
-JAR_SHA1 = "8f3112a1049751cc472ec13e397eade5336ca7ae"
+JAR_URL = "https://piston-data.mojang.com/v1/objects/8dd1a28015f51b1803213892b50b7b4fc76e594d/server.jar"
+JAR_SHA1 = JAR_URL.split("/")[-2]
 
 parser = ArgumentParser(description="mc-query test utility", prog=argv[0])
 parser.add_argument(
