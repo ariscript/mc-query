@@ -10,8 +10,8 @@ use tokio::time::timeout;
 
 use crate::errors::QueryProtocolError;
 
-static QUERY_MAGIC: u16 = 0xfe_fd;
-static SESSION_ID_MASK: u32 = 0x0f_0f_0f_0f;
+const QUERY_MAGIC: u16 = 0xfe_fd;
+const SESSION_ID_MASK: u32 = 0x0f_0f_0f_0f;
 
 /// A response from the server's basic query.
 /// Taken from [wiki.vg](https://wiki.vg/Query#Response_2)
@@ -82,6 +82,11 @@ pub struct FullStatResponse {
     pub players: Vec<String>,
 }
 
+async fn stat_send(sock: &UdpSocket, bytes: &[u8]) -> io::Result<Bytes> {
+    sock.send(bytes).await?;
+    Box::pin(timeout(Duration::from_millis(250), recv_packet(sock))).await?
+}
+
 /// Perform a basic stat query of the server per the [Query Protocol](https://wiki.vg/Query#Basic_Stat).
 /// Note that the server must have `query-enabled=true` set in its properties to get a response.
 /// The `query.port` property might also be different from `server.port`.
@@ -89,6 +94,10 @@ pub struct FullStatResponse {
 /// # Arguments
 /// * `host` - the hostname/IP of thr server to query
 /// * `port` - the port that the server's Query is running on
+///
+/// # Errors
+/// Will return `Err` if there was a network error, if the challenge token wasn't obtainable, or if
+/// invalid data was recieved.
 ///
 /// # Examples
 /// ```
@@ -107,29 +116,17 @@ pub async fn stat_basic(host: &str, port: u16) -> io::Result<BasicStatResponse> 
     let socket = UdpSocket::bind("0.0.0.0:0").await?;
     socket.connect(format!("{host}:{port}")).await?;
 
-    let (token, session) = handshake(&socket).await?;
+    let (token, session) = Box::pin(handshake(&socket)).await?;
 
     let mut bytes = BytesMut::new();
     bytes.put_u16(QUERY_MAGIC);
     bytes.put_u8(0); // packet type 0 - stat
     bytes.put_i32(session);
     bytes.put_i32(token);
-    socket.send(&bytes).await?;
 
-    let t = timeout(Duration::from_millis(250), recv_packet(&socket)).await;
-    let mut res = match t {
-        Ok(result) => result?,
-        Err(_) => {
-            // super unlucky time of challenge token expiring before we can use it
-            // must retry handshake and request
-            let (token, session) = handshake(&socket).await?;
-            let mut bytes = BytesMut::new();
-            bytes.put_u16(QUERY_MAGIC);
-            bytes.put_u8(0); // packet type 0 - stat
-            bytes.put_i32(session);
-            bytes.put_i32(token);
-            timeout(Duration::from_millis(250), recv_packet(&socket)).await??
-        }
+    let mut res = match stat_send(&socket, &bytes).await {
+        Ok(v) => v,
+        Err(_) => stat_send(&socket, &bytes).await?,
     };
 
     validate_packet(&mut res, 0, session)?;
@@ -167,6 +164,10 @@ pub async fn stat_basic(host: &str, port: u16) -> io::Result<BasicStatResponse> 
 /// * `host` - the hostname/IP of thr server to query
 /// * `port` - the port that the server's Query is running on
 ///
+/// # Errors
+/// Will return `Err` if there was a network error, if the challenge token wasn't obtainable, or
+/// if invalid data was recieved.
+///
 /// # Examples
 /// ```
 /// use mc_query::query;
@@ -184,7 +185,7 @@ pub async fn stat_full(host: &str, port: u16) -> io::Result<FullStatResponse> {
     let socket = UdpSocket::bind("0.0.0.0:0").await?;
     socket.connect(format!("{host}:{port}")).await?;
 
-    let (token, session) = handshake(&socket).await?;
+    let (token, session) = Box::pin(handshake(&socket)).await?;
 
     let mut bytes = BytesMut::new();
     bytes.put_u16(QUERY_MAGIC);
@@ -192,30 +193,16 @@ pub async fn stat_full(host: &str, port: u16) -> io::Result<FullStatResponse> {
     bytes.put_i32(session);
     bytes.put_i32(token);
     bytes.put_u32(0); // 4 extra bytes required for full stat vs. basic
-    socket.send(&bytes).await?;
 
-    let t = timeout(Duration::from_millis(250), recv_packet(&socket)).await;
-    let mut res = match t {
-        Ok(result) => result?,
-        Err(_) => {
-            // super unlucky time of challenge token expiring before we can use it
-            // must retry handshake and request
-            let (token, session) = handshake(&socket).await?;
-            let mut bytes = BytesMut::new();
-            bytes.put_u16(QUERY_MAGIC);
-            bytes.put_u8(0); // packet type 0 - stat
-            bytes.put_i32(session);
-            bytes.put_i32(token);
-            bytes.put_u32(0); // 4 extra bytes required for full stat vs. basic
-            timeout(Duration::from_millis(250), recv_packet(&socket)).await??
-        }
+    let mut res = match stat_send(&socket, &bytes).await {
+        Ok(v) => v,
+        Err(_) => stat_send(&socket, &bytes).await?,
     };
+
     validate_packet(&mut res, 0, session)?;
 
     // skip 11 meaningless padding bytes
-    for _ in 0..11 {
-        res.get_u8();
-    }
+    res.advance(11);
 
     // K,V section
     let mut kv = HashMap::new();
@@ -296,12 +283,16 @@ pub async fn stat_full(host: &str, port: u16) -> io::Result<FullStatResponse> {
     })
 }
 
-/// Perform a handshake request per https://wiki.vg/Query#Handshake
+/// Perform a handshake request per <https://wiki.vg/Query#Handshake>
 ///
 /// # Returns
 /// A tuple `(challenge_token, session_id)` to be used in subsequent server interactions
+///
+/// # Errors
+/// Returns `Err` if there was a network error, or if the returned token was not valid.
 async fn handshake(socket: &UdpSocket) -> io::Result<(i32, i32)> {
     // generate new token per interaction to avoid reset problems
+    #[allow(clippy::cast_possible_wrap)] // this is fine, we don't care about the value
     let session_id = (random::<u32>() & SESSION_ID_MASK) as i32;
 
     let mut req = BytesMut::with_capacity(7);
@@ -312,10 +303,10 @@ async fn handshake(socket: &UdpSocket) -> io::Result<(i32, i32)> {
 
     socket.send(&req).await?;
 
-    let mut res = recv_packet(socket).await?;
-    validate_packet(&mut res, 9, session_id)?;
+    let mut response = Box::pin(recv_packet(socket)).await?;
+    validate_packet(&mut response, 9, session_id)?;
 
-    let token_str = get_string(&mut res)?;
+    let token_str = get_string(&mut response)?;
 
     token_str
         .parse()
