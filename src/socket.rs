@@ -2,7 +2,7 @@ use crate::varint::{VarInt, CONTINUE_BIT};
 use async_trait::async_trait;
 use bytes::{BufMut, BytesMut};
 use std::io::{Error, ErrorKind};
-use tokio::io::{AsyncReadExt, AsyncWriteExt, Result};
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, Result};
 
 /// Trait to allow for reading and writing `VarInt`s from the socket.
 ///
@@ -64,7 +64,7 @@ pub(crate) trait ReadWriteNullTermString {
 #[async_trait]
 impl<T> ReadWriteVarInt for T
 where
-    T: AsyncReadExt + AsyncWriteExt + Unpin + Send + Sync,
+    T: AsyncRead + AsyncWrite + Unpin + Send,
 {
     async fn read_varint(&mut self) -> Result<i32> {
         let mut bytes = BytesMut::with_capacity(5);
@@ -91,12 +91,12 @@ where
 #[async_trait]
 impl<T> ReadWriteMinecraftString for T
 where
-    T: AsyncReadExt + AsyncWriteExt + Unpin + Send + Sync,
+    T: AsyncRead + AsyncWrite + Unpin + Send,
 {
     async fn read_mc_string(&mut self) -> Result<String> {
         let len = self.read_varint().await?;
         let mut buffer = vec![0; len as usize];
-        self.read_exact(&mut buffer).await?;
+        self.read(&mut buffer).await?;
 
         String::from_utf8(buffer).map_err(|err| Error::new(ErrorKind::InvalidData, err))
     }
@@ -112,7 +112,7 @@ where
 #[async_trait]
 impl<T> ReadWriteNullTermString for T
 where
-    T: AsyncReadExt + AsyncWriteExt + Unpin + Send + Sync,
+    T: AsyncRead + AsyncWrite + Unpin + Send,
 {
     async fn read_null_terminated_string(&mut self) -> Result<String> {
         let mut string = "".to_string();
