@@ -1,8 +1,6 @@
 //! Implementation of the [RCON](https://wiki.vg/RCON) protocol.
 
-mod packet;
-
-use self::packet::{RconPacket, RconPacketType};
+use super::packet::{RconPacket, RconPacketType};
 use crate::errors::RconProtocolError;
 use bytes::{BufMut, BytesMut};
 use tokio::{
@@ -141,7 +139,7 @@ impl RconClient {
 
 #[cfg(test)]
 mod tests {
-    use crate::rcon::RconClient;
+    use super::RconClient;
     use tokio::io;
 
     #[tokio::test]
