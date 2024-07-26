@@ -53,7 +53,7 @@ impl TryInto<i32> for VarInt {
         let mut value: i32 = 0;
         let mut position = 0;
 
-        for current_byte in self.bytes.into_iter() {
+        for current_byte in self.bytes {
             value |= ((current_byte & SEGMENT_BITS) as i32) << position;
 
             if current_byte & CONTINUE_BIT == 0 {

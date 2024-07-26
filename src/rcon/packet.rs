@@ -75,8 +75,7 @@ impl TryFrom<Bytes> for RconPacket {
         let request_id = bytes.get_i32_le();
         let packet_type = bytes.get_i32_le();
 
-        let mut payload = "".to_string();
-
+        let mut payload = String::new();
         loop {
             let current = bytes.get_u8();
             if current == 0 {

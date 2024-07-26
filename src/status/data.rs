@@ -34,7 +34,7 @@ pub struct StatusResponse {
 
 /// Struct that stores information about players on the server.
 ///
-/// Not intended to be used directly, but only as a part of [StatusResponse].
+/// Not intended to be used directly, but only as a part of [`StatusResponse`].
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Players {
     /// The maximum number of players allowed on the server.
@@ -50,7 +50,7 @@ pub struct Players {
 
 /// A player listed on the server's list ping information.
 ///
-/// Not intended to be used directly, but only as a part of [StatusResponse].
+/// Not intended to be used directly, but only as a part of [`StatusResponse`].
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Sample {
     /// The player's username.
@@ -62,7 +62,7 @@ pub struct Sample {
 
 /// Struct that stores version information about the server.
 ///
-/// Not intended to be used directly, but only as a part of [StatusResponse].
+/// Not intended to be used directly, but only as a part of [`StatusResponse`].
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Version {
     /// The game version (e.g: 1.19.1)
@@ -176,7 +176,7 @@ pub struct ChatHoverEvent {
     /// Text to show when the item is hovered over
     pub show_text: Option<Box<ChatObject>>,
 
-    /// Same as show_text, but for servers < 1.16
+    /// Same as `show_text`, but for servers < 1.16
     pub value: Option<Box<ChatObject>>,
 
     /// Displays the item of the given NBT
