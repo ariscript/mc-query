@@ -96,7 +96,7 @@ where
     async fn read_mc_string(&mut self) -> Result<String> {
         let len = self.read_varint().await?;
         let mut buffer = vec![0; len as usize];
-        self.read(&mut buffer).await?;
+        self.read_exact(&mut buffer).await?;
 
         String::from_utf8(buffer).map_err(|err| Error::new(ErrorKind::InvalidData, err))
     }
@@ -115,7 +115,7 @@ where
     T: AsyncRead + AsyncWrite + Unpin + Send,
 {
     async fn read_null_terminated_string(&mut self) -> Result<String> {
-        let mut string = "".to_string();
+        let mut string = String::new();
 
         loop {
             let current = self.read_u8().await?;

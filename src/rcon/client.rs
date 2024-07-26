@@ -2,7 +2,7 @@
 
 use super::{
     packet::{RconPacket, RconPacketType},
-    MAX_LEN_CLIENTBOUND, MAX_LEN_SERVERBOUND,
+    MAX_LEN_CLIENTBOUND,
 };
 use crate::errors::RconProtocolError;
 use bytes::{BufMut, BytesMut};
@@ -42,6 +42,9 @@ impl RconClient {
     /// # Arguments
     /// * `host` - A string slice that holds the hostname of the server to connect to.
     /// * `port` - The port to connect to.
+    ///
+    /// # Errors
+    /// Returns `Err` if there was a network error.
     pub async fn new(host: &str, port: u16) -> io::Result<Self> {
         let connection = TcpStream::connect(format!("{host}:{port}")).await?;
 
@@ -49,6 +52,9 @@ impl RconClient {
     }
 
     /// Disconnect from the server and close the RCON connection.
+    ///
+    /// # Errors
+    /// Returns `Err` if there was an issue closing the connection.
     pub async fn disconnect(mut self) -> io::Result<()> {
         self.socket.shutdown().await
     }
@@ -59,6 +65,10 @@ impl RconClient {
     ///
     /// # Arguments
     /// * `password` - A string slice that holds the RCON password.
+    ///
+    /// # Errors
+    /// Returns the raw `tokio::io::Error` if there was a network error.
+    /// Returns an apprpriate [`RconProtocolError`] if the authentication failed for other reasons.
     pub async fn authenticate(&mut self, password: &str) -> io::Result<()> {
         let packet =
             RconPacket::new(1, RconPacketType::Login, password.to_string()).map_err(Error::from)?;
@@ -84,13 +94,16 @@ impl RconClient {
     ///
     /// # Arguments
     /// * `command` - A string slice that holds the command to run. Must be ASCII and under 1446 bytes in length.
+    ///
+    /// # Errors
+    /// Returns an error if there was a network issue or an [`RconProtocolError`] for other failures.
     pub async fn run_command(&mut self, command: &str) -> io::Result<String> {
         let packet = RconPacket::new(1, RconPacketType::RunCommand, command.to_string())
             .map_err(Error::from)?;
 
         self.write_packet(packet).await?;
 
-        let mut full_payload = "".to_string();
+        let mut full_payload = String::new();
 
         loop {
             let recieved = self.read_packet().await?;
@@ -132,7 +145,7 @@ impl RconClient {
     /// Write a packet to the socket.
     ///
     /// # Arguments
-    /// * `packet` - An owned [RconPacket] to write to the socket.
+    /// * `packet` - An owned [`RconPacket`] to write to the socket.
     async fn write_packet(&mut self, packet: RconPacket) -> io::Result<()> {
         let bytes = packet.bytes();
 

@@ -36,7 +36,7 @@ pub struct BasicStatResponse {
     /// The port the serer is running on.
     pub host_port: u16,
 
-    /// THe server's IP address.
+    /// The server's IP address.
     pub host_ip: String,
 }
 
@@ -78,7 +78,7 @@ pub struct FullStatResponse {
     /// The server's IP address.
     pub host_ip: String,
 
-    /// THe current list of online players.
+    /// The current list of online players.
     pub players: Vec<String>,
 }
 
