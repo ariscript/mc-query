@@ -1,5 +1,8 @@
+//! Get the status of a server using the [Server List Ping](https://wiki.vg/Server_List_Ping) protocol.
+//! See documentation for [`status`] for more information.
+
 pub mod data;
-pub mod packet;
+mod packet;
 
 use crate::{
     errors::MinecraftProtocolError,
@@ -21,6 +24,9 @@ use self::{
 /// # Arguments
 /// * `host` - A string slice that holds the hostname of the server to connect to.
 /// * `port` - The port to connect to on that server.
+///
+/// # Errors
+/// Returns `Err` if there was a network issue or the server sent invalid data.
 ///
 /// # Examples
 /// ```
