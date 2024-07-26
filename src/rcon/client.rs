@@ -1,6 +1,9 @@
 //! Implementation of the [RCON](https://wiki.vg/RCON) protocol.
 
-use super::packet::{RconPacket, RconPacketType};
+use super::{
+    packet::{RconPacket, RconPacketType},
+    MAX_LEN_CLIENTBOUND, MAX_LEN_SERVERBOUND,
+};
 use crate::errors::RconProtocolError;
 use bytes::{BufMut, BytesMut};
 use tokio::{
@@ -103,7 +106,7 @@ impl RconClient {
             // wiki says this method of determining if this is the end of the
             // response is not 100% reliable, but this is the best solution imo
             // if this ends up being a problem, this can be changed later
-            if recieved.payload.len() < 4096 {
+            if recieved.payload.len() < MAX_LEN_CLIENTBOUND {
                 break;
             }
         }
