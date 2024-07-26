@@ -2,6 +2,8 @@ use crate::errors::RconProtocolError;
 use bytes::{Buf, BufMut, Bytes, BytesMut};
 use std::mem::size_of;
 
+use super::{MAX_LEN_CLIENTBOUND, MAX_LEN_SERVERBOUND};
+
 #[derive(Debug)]
 pub(super) enum RconPacketType {
     Response,
@@ -49,7 +51,9 @@ impl RconPacket {
             return Err(RconProtocolError::NonAsciiPayload);
         }
 
-        if payload.len() > 1446 {}
+        if payload.len() > Ord::max(MAX_LEN_CLIENTBOUND, MAX_LEN_SERVERBOUND) {
+            return Err(RconProtocolError::PayloadTooLong);
+        }
 
         Ok(Self {
             request_id,
