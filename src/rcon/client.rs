@@ -36,7 +36,7 @@ pub struct RconClient {
 }
 
 impl RconClient {
-    /// Construct an [RconClient] that connects to the given host and port.
+    /// Construct an [`RconClient`] that connects to the given host and port.
     /// Note: to authenticate use the `authenticate` method, this method does not take a password.
     ///
     /// # Arguments
@@ -61,7 +61,7 @@ impl RconClient {
 
     /// Authenticate with the server, with the given password.
     ///
-    /// If authentication fails, this method will return [RconProtocolError::AuthFailed].
+    /// If authentication fails, this method will return [`RconProtocolError::AuthFailed`].
     ///
     /// # Arguments
     /// * `password` - A string slice that holds the RCON password.
