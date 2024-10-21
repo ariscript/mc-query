@@ -4,6 +4,7 @@
 mod client;
 mod packet;
 
+#[allow(clippy::module_name_repetitions)]
 pub use client::RconClient;
 
 const MAX_LEN_CLIENTBOUND: usize = 4096;

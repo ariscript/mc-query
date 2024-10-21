@@ -30,6 +30,7 @@ use tokio::{
 ///     Ok(())
 /// }
 /// ```
+#[allow(clippy::module_name_repetitions)]
 #[derive(Debug)]
 pub struct RconClient {
     socket: TcpStream,
