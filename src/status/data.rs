@@ -121,6 +121,7 @@ pub struct ChatComponentObject {
     /// * `minecraft:uniform` - Unicode font
     /// * `minecraft:alt` - enchanting table font
     /// * `minecraft:default` - font based on resource pack (1.16+)
+    ///
     /// Any other value can be ignored
     pub font: Option<String>,
 

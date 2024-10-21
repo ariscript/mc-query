@@ -2,7 +2,7 @@ use crate::varint::{VarInt, CONTINUE_BIT};
 use async_trait::async_trait;
 use bytes::{BufMut, BytesMut};
 use std::io::{Error, ErrorKind};
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, Result};
+use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, Result};
 
 /// Trait to allow for reading and writing `VarInt`s from the socket.
 ///
@@ -12,26 +12,6 @@ pub(crate) trait ReadWriteVarInt {
     /// Read a [VarInt] from the socket.
     /// Returns the parsed value as [i32] in a [Result].
     async fn read_varint(&mut self) -> Result<i32>;
-
-    /// Write a [VarInt] to the socket.
-    /// Writes the given integer in the form of a [VarInt].
-    /// Returns whether the operation was successful in a [Result].
-    async fn write_varint(&mut self, value: i32) -> Result<()>;
-}
-
-/// Trait to allow for reading and writing `VarLong`s from the socket.
-///
-/// The type is specified [in wiki.vg](https://wiki.vg/Protocol#VarInt_and_VarLong).
-#[async_trait]
-pub(crate) trait ReadWriteVarLong {
-    /// Read a `VarLong` from the socket.
-    /// Returns the parsed value as [i64] in a [Result].
-    async fn read_varlong(&mut self) -> Result<i64>;
-
-    /// Write a `VarLong` to the socket.
-    /// Writes the given integer in the form of a `VarLong`.
-    /// Returns whether the operation was successful in a [Result].
-    async fn write_varlong(&mut self, value: i64) -> Result<()>;
 }
 
 /// Trait to allow for reading and writing strings from the socket.
@@ -43,22 +23,6 @@ pub(crate) trait ReadWriteMinecraftString {
     /// Read a [String] from the socket.
     /// Returns the parsed value recieved from the socket in a [Result].
     async fn read_mc_string(&mut self) -> Result<String>;
-
-    /// Write a [str] to the socket.
-    /// Returns whether the operation was successful in a [Result].
-    async fn write_mc_string(&mut self, value: &str) -> Result<()>;
-}
-
-/// Trait to allow for reading and writing null terminated strings from the socket.
-#[async_trait]
-pub(crate) trait ReadWriteNullTermString {
-    /// Read a [String] from the socket.
-    /// Returns the pased value recieved from the socket in a [Result].
-    async fn read_null_terminated_string(&mut self) -> Result<String>;
-
-    /// Write a [str] ot the socket
-    /// Returns whetehr the operation was successful in a [Result].
-    async fn write_null_terminated_string(&mut self, value: &str) -> Result<()>;
 }
 
 #[async_trait]
@@ -82,10 +46,6 @@ where
             .try_into()
             .map_err(|err| Error::new(ErrorKind::InvalidData, err))
     }
-
-    async fn write_varint(&mut self, value: i32) -> Result<()> {
-        self.write_all(&VarInt::from(value)).await
-    }
 }
 
 #[async_trait]
@@ -99,38 +59,5 @@ where
         self.read_exact(&mut buffer).await?;
 
         String::from_utf8(buffer).map_err(|err| Error::new(ErrorKind::InvalidData, err))
-    }
-
-    async fn write_mc_string(&mut self, value: &str) -> Result<()> {
-        self.write_varint(value.len() as i32).await?;
-        self.write_all(value.as_bytes()).await?;
-
-        Ok(())
-    }
-}
-
-#[async_trait]
-impl<T> ReadWriteNullTermString for T
-where
-    T: AsyncRead + AsyncWrite + Unpin + Send,
-{
-    async fn read_null_terminated_string(&mut self) -> Result<String> {
-        let mut string = String::new();
-
-        loop {
-            let current = self.read_u8().await?;
-            if current == 0 {
-                break;
-            }
-
-            string.push(current as char);
-        }
-
-        Ok(string)
-    }
-
-    async fn write_null_terminated_string(&mut self, value: &str) -> Result<()> {
-        self.write_all(value.as_bytes()).await?;
-        self.write_u8(0).await
     }
 }
