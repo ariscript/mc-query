@@ -6,7 +6,7 @@ use thiserror::Error;
 /// An error from the Minecraft networking protocol.
 #[derive(Error, Debug)]
 pub enum MinecraftProtocolError {
-    /// VarInt data was invalid according to the spec.
+    /// `VarInt` data was invalid according to the spec.
     #[error("invalid varint data")]
     InvalidVarInt,
 

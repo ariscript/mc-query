@@ -107,7 +107,7 @@ mod tests {
             (i32::MIN, b"\x80\x80\x80\x80\x08"),
         ]);
 
-        for (k, v) in cases.into_iter() {
+        for (k, v) in cases {
             let varint: VarInt = k.into();
             assert_eq!(varint.bytes.len(), v.len());
             assert_eq!(varint.bytes, v);
@@ -140,7 +140,7 @@ mod tests {
         })
         .collect::<HashMap<_, _>>();
 
-        for (k, v) in cases.into_iter() {
+        for (k, v) in cases {
             let x: Result<i32, _> = v.try_into();
 
             if let Err(MinecraftProtocolError::InvalidVarInt) = x {
