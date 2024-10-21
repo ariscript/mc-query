@@ -146,7 +146,7 @@ pub struct ChatComponentObject {
     pub extra: Option<Vec<ChatObject>>,
 }
 
-/// ClickEvent data for a chat component
+/// `ClickEvent` data for a chat component
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ChatClickEvent {
     // These are not renamed on purpose. (server returns them in snake_case)
@@ -169,7 +169,7 @@ pub struct ChatClickEvent {
     pub copy_to_clipboard: Option<String>,
 }
 
-/// HoverEvent data for a chat component
+/// `HoverEvent` data for a chat component
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ChatHoverEvent {
     // These are not renamed on purpose. (server returns them in snake_case)
