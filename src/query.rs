@@ -92,7 +92,7 @@ async fn stat_send(sock: &UdpSocket, bytes: &[u8]) -> io::Result<Bytes> {
 /// The `query.port` property might also be different from `server.port`.
 ///
 /// # Arguments
-/// * `host` - the hostname/IP of thr server to query
+/// * `host` - the hostname/IP of the server to query
 /// * `port` - the port that the server's Query is running on
 /// * `timeout` - Timeout duration for the request.
 ///
@@ -167,7 +167,7 @@ pub async fn stat_basic(host: &str, port: u16, timeout: Duration) -> io::Result<
 /// The `query.port` property might also be different from `server.port`.
 ///
 /// # Arguments
-/// * `host` - the hostname/IP of thr server to query
+/// * `host` - the hostname/IP of the server to query
 /// * `port` - the port that the server's Query is running on
 /// * `timeout` - Timeout duration for the request.
 ///

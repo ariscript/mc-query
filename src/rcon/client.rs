@@ -68,7 +68,7 @@ impl RconClient {
     ///
     /// # Errors
     /// Returns the raw `tokio::io::Error` if there was a network error.
-    /// Returns an apprpriate [`RconProtocolError`] if the authentication failed for other reasons.
+    /// Returns an appropriate [`RconProtocolError`] if the authentication failed for other reasons.
     pub async fn authenticate(&mut self, password: &str) -> io::Result<()> {
         let packet =
             RconPacket::new(1, RconPacketType::Login, password.to_string()).map_err(Error::from)?;
@@ -106,20 +106,20 @@ impl RconClient {
         let mut full_payload = String::new();
 
         loop {
-            let recieved = self.read_packet().await?;
+            let received = self.read_packet().await?;
 
-            if recieved.request_id == -1 {
+            if received.request_id == -1 {
                 return Err(RconProtocolError::AuthFailed.into());
-            } else if recieved.request_id != 1 {
+            } else if received.request_id != 1 {
                 return Err(RconProtocolError::RequestIdMismatch.into());
             }
 
-            full_payload.push_str(&recieved.payload);
+            full_payload.push_str(&received.payload);
 
             // wiki says this method of determining if this is the end of the
             // response is not 100% reliable, but this is the best solution imo
             // if this ends up being a problem, this can be changed later
-            if recieved.payload.len() < MAX_LEN_CLIENTBOUND {
+            if received.payload.len() < MAX_LEN_CLIENTBOUND {
                 break;
             }
         }
@@ -164,7 +164,7 @@ mod tests {
         client.authenticate("mc-query-test").await?;
         let response = client.run_command("time set day").await?;
 
-        println!("recieved response: {response}");
+        println!("received response: {response}");
 
         Ok(())
     }

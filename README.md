@@ -98,7 +98,7 @@ async fn main() -> Result<()> {
 
 Some tests in this library require a minecraft server to be running on `localhost`.
 If you are contributing a feature or bugfix that involves one of these tests,
-run the convienient testing script `./test` (or `py -3 test` on Windows).
+run the convenient testing script `./test` (or `py -3 test` on Windows).
 You can also just run a minecraft server without the cargo tests (useful for debugging with IDEs) with `./test --server-only true`.
 
 This requires a decently modern version of Python 3, and Java 17 or higher to run the server.

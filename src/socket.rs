@@ -41,7 +41,7 @@ pub(crate) trait ReadWriteVarLong {
 #[async_trait]
 pub(crate) trait ReadWriteMinecraftString {
     /// Read a [String] from the socket.
-    /// Returns the parsed value recieved from the socket in a [Result].
+    /// Returns the parsed value received from the socket in a [Result].
     async fn read_mc_string(&mut self) -> Result<String>;
 
     /// Write a [str] to the socket.
@@ -53,11 +53,11 @@ pub(crate) trait ReadWriteMinecraftString {
 #[async_trait]
 pub(crate) trait ReadWriteNullTermString {
     /// Read a [String] from the socket.
-    /// Returns the pased value recieved from the socket in a [Result].
+    /// Returns the parsed value received from the socket in a [Result].
     async fn read_null_terminated_string(&mut self) -> Result<String>;
 
-    /// Write a [str] ot the socket
-    /// Returns whetehr the operation was successful in a [Result].
+    /// Write a [str] to the socket
+    /// Returns whether the operation was successful in a [Result].
     async fn write_null_terminated_string(&mut self, value: &str) -> Result<()>;
 }
 
