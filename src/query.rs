@@ -94,66 +94,72 @@ async fn stat_send(sock: &UdpSocket, bytes: &[u8]) -> io::Result<Bytes> {
 /// # Arguments
 /// * `host` - the hostname/IP of thr server to query
 /// * `port` - the port that the server's Query is running on
+/// * `timeout` - Timeout duration for the request.
 ///
 /// # Errors
 /// Will return `Err` if there was a network error, if the challenge token wasn't obtainable, or if
-/// invalid data was recieved.
+/// invalid data was received.
 ///
 /// # Examples
 /// ```
 /// use mc_query::query;
 /// use tokio::io::Result;
+/// use std::time::Duration;
 ///
 /// #[tokio::main]
 /// async fn main() -> Result<()> {
-///     let res = query::stat_basic("localhost", 25565).await?;
+///     let res = query::stat_basic("localhost", 25565, Duration::from_secs(5)).await?;
 ///     println!("The server has {} players online out of {}", res.num_players, res.num_players);
 ///
 ///     Ok(())
 /// }
 /// ```
-pub async fn stat_basic(host: &str, port: u16) -> io::Result<BasicStatResponse> {
-    let socket = UdpSocket::bind("0.0.0.0:0").await?;
-    socket.connect(format!("{host}:{port}")).await?;
+pub async fn stat_basic(host: &str, port: u16, timeout: Duration) -> io::Result<BasicStatResponse> {
+    let future = async {
+        let socket = UdpSocket::bind("0.0.0.0:0").await?;
+        socket.connect(format!("{host}:{port}")).await?;
 
-    let (token, session) = Box::pin(handshake(&socket)).await?;
+        let (token, session) = Box::pin(handshake(&socket)).await?;
 
-    let mut bytes = BytesMut::new();
-    bytes.put_u16(QUERY_MAGIC);
-    bytes.put_u8(0); // packet type 0 - stat
-    bytes.put_i32(session);
-    bytes.put_i32(token);
+        let mut bytes = BytesMut::new();
+        bytes.put_u16(QUERY_MAGIC);
+        bytes.put_u8(0); // packet type 0 - stat
+        bytes.put_i32(session);
+        bytes.put_i32(token);
 
-    let mut res = match stat_send(&socket, &bytes).await {
-        Ok(v) => v,
-        Err(_) => stat_send(&socket, &bytes).await?,
+        let mut res = match stat_send(&socket, &bytes).await {
+            Ok(v) => v,
+            Err(_) => stat_send(&socket, &bytes).await?,
+        };
+
+        validate_packet(&mut res, 0, session)?;
+
+        let motd = get_string(&mut res)?;
+        let game_type = get_string(&mut res)?;
+        let map = get_string(&mut res)?;
+        let num_players = get_string(&mut res)?
+            .parse()
+            .map_err::<io::Error, _>(|_| QueryProtocolError::CannotParseInt.into())?;
+        let max_players = get_string(&mut res)?
+            .parse()
+            .map_err::<io::Error, _>(|_| QueryProtocolError::CannotParseInt.into())?;
+
+        let host_port = res.get_u16_le(); // shorts are little endian per protocol
+
+        let host_ip = get_string(&mut res)?;
+
+        Ok(BasicStatResponse {
+            motd,
+            game_type,
+            map,
+            num_players,
+            max_players,
+            host_port,
+            host_ip,
+        })
     };
 
-    validate_packet(&mut res, 0, session)?;
-
-    let motd = get_string(&mut res)?;
-    let game_type = get_string(&mut res)?;
-    let map = get_string(&mut res)?;
-    let num_players = get_string(&mut res)?
-        .parse()
-        .map_err::<io::Error, _>(|_| QueryProtocolError::CannotParseInt.into())?;
-    let max_players = get_string(&mut res)?
-        .parse()
-        .map_err::<io::Error, _>(|_| QueryProtocolError::CannotParseInt.into())?;
-
-    let host_port = res.get_u16_le(); // shorts are little endian per protocol
-
-    let host_ip = get_string(&mut res)?;
-
-    Ok(BasicStatResponse {
-        motd,
-        game_type,
-        map,
-        num_players,
-        max_players,
-        host_port,
-        host_ip,
-    })
+    tokio::time::timeout(timeout, future).await?
 }
 
 /// Perform a full stat query of the server per the [Query Protocol](https://wiki.vg/Query#Full_stat).
@@ -163,124 +169,130 @@ pub async fn stat_basic(host: &str, port: u16) -> io::Result<BasicStatResponse> 
 /// # Arguments
 /// * `host` - the hostname/IP of thr server to query
 /// * `port` - the port that the server's Query is running on
+/// * `timeout` - Timeout duration for the request.
 ///
 /// # Errors
 /// Will return `Err` if there was a network error, if the challenge token wasn't obtainable, or
-/// if invalid data was recieved.
+/// if invalid data was received.
 ///
 /// # Examples
 /// ```
 /// use mc_query::query;
 /// use tokio::io::Result;
+/// use std::time::Duration;
 ///
 /// #[tokio::main]
 /// async fn main() -> Result<()> {
-///     let res = query::stat_full("localhost", 25565).await?;
+///     let res = query::stat_full("localhost", 25565, Duration::from_secs(5)).await?;
 ///     println!("The server has {} players online out of {}", res.num_players, res.num_players);
 ///
 ///     Ok(())
 /// }
 /// ```
-pub async fn stat_full(host: &str, port: u16) -> io::Result<FullStatResponse> {
-    let socket = UdpSocket::bind("0.0.0.0:0").await?;
-    socket.connect(format!("{host}:{port}")).await?;
+pub async fn stat_full(host: &str, port: u16, timeout: Duration) -> io::Result<FullStatResponse> {
+    let future = async {
+        let socket = UdpSocket::bind("0.0.0.0:0").await?;
+        socket.connect(format!("{host}:{port}")).await?;
 
-    let (token, session) = Box::pin(handshake(&socket)).await?;
+        let (token, session) = Box::pin(handshake(&socket)).await?;
 
-    let mut bytes = BytesMut::new();
-    bytes.put_u16(QUERY_MAGIC);
-    bytes.put_u8(0); // packet type 0 - stat
-    bytes.put_i32(session);
-    bytes.put_i32(token);
-    bytes.put_u32(0); // 4 extra bytes required for full stat vs. basic
+        let mut bytes = BytesMut::new();
+        bytes.put_u16(QUERY_MAGIC);
+        bytes.put_u8(0); // packet type 0 - stat
+        bytes.put_i32(session);
+        bytes.put_i32(token);
+        bytes.put_u32(0); // 4 extra bytes required for full stat vs. basic
 
-    let mut res = match stat_send(&socket, &bytes).await {
-        Ok(v) => v,
-        Err(_) => stat_send(&socket, &bytes).await?,
+        let mut res = match stat_send(&socket, &bytes).await {
+            Ok(v) => v,
+            Err(_) => stat_send(&socket, &bytes).await?,
+        };
+
+        validate_packet(&mut res, 0, session)?;
+
+        // skip 11 meaningless padding bytes
+        res.advance(11);
+
+        // K,V section
+        let mut kv = HashMap::new();
+        loop {
+            let key = get_string(&mut res)?;
+            if key.is_empty() {
+                break;
+            }
+            let value = get_string(&mut res)?;
+            kv.insert(key, value);
+        }
+
+        // excuse this horrendous code, I don't know of a better way
+        let motd = kv
+            .remove("hostname")
+            .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
+        let game_type = kv
+            .remove("gametype")
+            .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
+        let game_id = kv
+            .remove("game_id")
+            .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
+        let version = kv
+            .remove("version")
+            .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
+        let plugins = kv
+            .remove("plugins")
+            .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
+        let map = kv
+            .remove("map")
+            .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
+        let num_players = kv
+            .remove("numplayers")
+            .ok_or(QueryProtocolError::InvalidKeyValueSection)?
+            .parse()
+            .map_err(|_| QueryProtocolError::CannotParseInt)?;
+        let max_players = kv
+            .remove("maxplayers")
+            .ok_or(QueryProtocolError::InvalidKeyValueSection)?
+            .parse()
+            .map_err(|_| QueryProtocolError::CannotParseInt)?;
+        let host_port = kv
+            .remove("hostport")
+            .ok_or(QueryProtocolError::InvalidKeyValueSection)?
+            .parse()
+            .map_err(|_| QueryProtocolError::CannotParseInt)?;
+        let host_ip = kv
+            .remove("hostip")
+            .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
+
+        // skip 10 meaningless padding bytes
+        for _ in 0..10 {
+            res.get_u8();
+        }
+
+        // players section
+        let mut players = vec![];
+        loop {
+            let username = get_string(&mut res)?;
+            if username.is_empty() {
+                break;
+            }
+            players.push(username);
+        }
+
+        Ok(FullStatResponse {
+            motd,
+            game_type,
+            game_id,
+            version,
+            plugins,
+            map,
+            num_players,
+            max_players,
+            host_port,
+            host_ip,
+            players,
+        })
     };
 
-    validate_packet(&mut res, 0, session)?;
-
-    // skip 11 meaningless padding bytes
-    res.advance(11);
-
-    // K,V section
-    let mut kv = HashMap::new();
-    loop {
-        let key = get_string(&mut res)?;
-        if key.is_empty() {
-            break;
-        }
-        let value = get_string(&mut res)?;
-        kv.insert(key, value);
-    }
-
-    // excuse this horrendous code, I don't know of a better way
-    let motd = kv
-        .remove("hostname")
-        .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
-    let game_type = kv
-        .remove("gametype")
-        .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
-    let game_id = kv
-        .remove("game_id")
-        .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
-    let version = kv
-        .remove("version")
-        .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
-    let plugins = kv
-        .remove("plugins")
-        .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
-    let map = kv
-        .remove("map")
-        .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
-    let num_players = kv
-        .remove("numplayers")
-        .ok_or(QueryProtocolError::InvalidKeyValueSection)?
-        .parse()
-        .map_err(|_| QueryProtocolError::CannotParseInt)?;
-    let max_players = kv
-        .remove("maxplayers")
-        .ok_or(QueryProtocolError::InvalidKeyValueSection)?
-        .parse()
-        .map_err(|_| QueryProtocolError::CannotParseInt)?;
-    let host_port = kv
-        .remove("hostport")
-        .ok_or(QueryProtocolError::InvalidKeyValueSection)?
-        .parse()
-        .map_err(|_| QueryProtocolError::CannotParseInt)?;
-    let host_ip = kv
-        .remove("hostip")
-        .ok_or(QueryProtocolError::InvalidKeyValueSection)?;
-
-    // skip 10 meaningless padding bytes
-    for _ in 0..10 {
-        res.get_u8();
-    }
-
-    // players section
-    let mut players = vec![];
-    loop {
-        let username = get_string(&mut res)?;
-        if username.is_empty() {
-            break;
-        }
-        players.push(username);
-    }
-
-    Ok(FullStatResponse {
-        motd,
-        game_type,
-        game_id,
-        version,
-        plugins,
-        map,
-        num_players,
-        max_players,
-        host_port,
-        host_ip,
-        players,
-    })
+    tokio::time::timeout(timeout, future).await?
 }
 
 /// Perform a handshake request per <https://wiki.vg/Query#Handshake>
@@ -350,13 +362,14 @@ fn get_string(bytes: &mut Bytes) -> io::Result<String> {
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
     use tokio::io;
 
     use super::{stat_basic, stat_full};
 
     #[tokio::test]
     async fn test_stat_basic() -> io::Result<()> {
-        let response = stat_basic("localhost", 25565).await?;
+        let response = stat_basic("localhost", 25565, Duration::from_secs(5)).await?;
         println!("{response:#?}");
 
         Ok(())
@@ -364,7 +377,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_stat_full() -> io::Result<()> {
-        let response = stat_full("localhost", 25565).await?;
+        let response = stat_full("localhost", 25565, Duration::from_secs(5)).await?;
         println!("{response:#?}");
 
         Ok(())
