@@ -25,10 +25,11 @@ You can read the docs [here](https://docs.rs/mc-query).
 ```rs
 use mc_query::status;
 use tokio::io::Result;
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let data = status("mc.hypixel.net", 25565).await?;
+    let data = status("mc.hypixel.net", 25565, Duration::from_secs(5)).await?;
     println!("{data:#?}");
 
     Ok(())
@@ -57,11 +58,12 @@ async fn main() -> Result<()> {
 
 ```rs
 use mc_query::query;
-use tokio;:io::Result;
+use tokio::io::Result;
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let res = stat_basic("localhost", 25565).await?;
+    let res = stat_basic("localhost", 25565, Duration::from_secs(5)).await?;
     println!(
        "Server has {} out of {} players online",
        res.num_players,
@@ -77,10 +79,11 @@ async fn main() -> Result<()> {
 ```rs
 use mc_query::query;
 use tokio;:io::Result;
+use std::time::Duration;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let res = stat_full("localhost", 25565).await?;
+    let res = stat_full("localhost", 25565, Duration::from_secs(5)).await?;
     println!("Online players: {:#?}, res.players);
     
     Ok(())
