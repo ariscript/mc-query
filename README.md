@@ -67,7 +67,7 @@ async fn main() -> Result<()> {
        res.num_players,
        res.max_players
     );
-    
+
     Ok(())
 }
 ```
@@ -82,7 +82,7 @@ use tokio;:io::Result;
 async fn main() -> Result<()> {
     let res = stat_full("localhost", 25565).await?;
     println!("Online players: {:#?}, res.players);
-    
+
     Ok(())
 }
 ```

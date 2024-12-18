@@ -80,6 +80,8 @@ pub async fn status(host: &str, port: u16) -> io::Result<StatusResponse> {
         .map_err(|_| MinecraftProtocolError::InvalidStatusResponse.into())
 }
 
+create_timeout!(status, StatusResponse);
+
 #[cfg(test)]
 mod tests {
     use super::status;

@@ -283,6 +283,9 @@ pub async fn stat_full(host: &str, port: u16) -> io::Result<FullStatResponse> {
     })
 }
 
+create_timeout!(stat_basic, BasicStatResponse);
+create_timeout!(stat_full, FullStatResponse);
+
 /// Perform a handshake request per <https://wiki.vg/Query#Handshake>
 ///
 /// # Returns

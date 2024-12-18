@@ -4,11 +4,13 @@ use super::{
     packet::{RconPacket, RconPacketType},
     MAX_LEN_CLIENTBOUND,
 };
-use crate::errors::RconProtocolError;
+use crate::errors::{timeout_err, RconProtocolError};
 use bytes::{BufMut, BytesMut};
+use std::time::Duration;
 use tokio::{
     io::{self, AsyncReadExt, AsyncWriteExt, Error},
     net::TcpStream,
+    time::timeout,
 };
 
 /// Struct that stores the connection and other state of the RCON protocol with the server.
@@ -34,11 +36,15 @@ use tokio::{
 #[derive(Debug)]
 pub struct RconClient {
     socket: TcpStream,
+    timeout: Option<Duration>,
 }
 
 impl RconClient {
     /// Construct an [`RconClient`] that connects to the given host and port.
     /// Note: to authenticate use the `authenticate` method, this method does not take a password.
+    ///
+    /// Clients constructed this way will wait arbitrarily long (maybe forever!) to recieve
+    /// a response from the server. To set a timeout, see [`with_timeout`] or [`set_timeout`].
     ///
     /// # Arguments
     /// * `host` - A string slice that holds the hostname of the server to connect to.
@@ -49,7 +55,40 @@ impl RconClient {
     pub async fn new(host: &str, port: u16) -> io::Result<Self> {
         let connection = TcpStream::connect(format!("{host}:{port}")).await?;
 
-        Ok(Self { socket: connection })
+        Ok(Self {
+            socket: connection,
+            timeout: None,
+        })
+    }
+
+    /// Construct an [`RconClient`] that connects to the given host and port, and a connection
+    /// timeout.
+    /// Note: to authenticate use the `authenticate` method, this method does not take a password.
+    ///
+    /// Note that timeouts are not precise, and may vary on the order of milliseconds, because
+    /// of the way the async event loop works.
+    ///
+    /// # Arguments
+    /// * `host` - A string slice that holds the hostname of the server to connect to.
+    /// * `port` - The port to connect to.
+    /// * `timeout` - A duration to wait for each response to arrive in.
+    ///
+    /// # Errors
+    /// Returns `Err` if there was a network error.
+    pub async fn with_timeout(host: &str, port: u16, timeout: Duration) -> io::Result<Self> {
+        let mut client = Self::new(host, port).await?;
+        client.set_timeout(Some(timeout));
+
+        Ok(client)
+    }
+
+    /// Change the timeout for future requests.
+    ///
+    /// # Arguments
+    /// * `timeout` - an option specifying the duration to wait for a response.
+    ///               if none, the client may wait forever.
+    pub fn set_timeout(&mut self, timeout: Option<Duration>) {
+        self.timeout = timeout;
     }
 
     /// Disconnect from the server and close the RCON connection.
@@ -70,7 +109,36 @@ impl RconClient {
     /// # Errors
     /// Returns the raw `tokio::io::Error` if there was a network error.
     /// Returns an apprpriate [`RconProtocolError`] if the authentication failed for other reasons.
+    /// Also returns an error if a timeout is set, and the response is not recieved in that timeframe.
     pub async fn authenticate(&mut self, password: &str) -> io::Result<()> {
+        let to = self.timeout;
+        let fut = self.authenticate_raw(password);
+
+        match to {
+            None => fut.await,
+            Some(d) => timeout(d, fut).await.unwrap_or(timeout_err()),
+        }
+    }
+
+    /// Run the given command on the server and return the result.
+    ///
+    /// # Arguments
+    /// * `command` - A string slice that holds the command to run. Must be ASCII and under 1446 bytes in length.
+    ///
+    /// # Errors
+    /// Returns an error if there was a network issue or an [`RconProtocolError`] for other failures.
+    /// Also returns an error if a timeout was set and a response was not recieved in that timeframe.
+    pub async fn run_command(&mut self, command: &str) -> io::Result<String> {
+        let to = self.timeout;
+        let fut = self.run_command_raw(command);
+
+        match to {
+            None => fut.await,
+            Some(d) => timeout(d, fut).await.unwrap_or(timeout_err()),
+        }
+    }
+
+    async fn authenticate_raw(&mut self, password: &str) -> io::Result<()> {
         let packet =
             RconPacket::new(1, RconPacketType::Login, password.to_string()).map_err(Error::from)?;
 
@@ -91,14 +159,7 @@ impl RconClient {
         Ok(())
     }
 
-    /// Run the given command on the server and return the result.
-    ///
-    /// # Arguments
-    /// * `command` - A string slice that holds the command to run. Must be ASCII and under 1446 bytes in length.
-    ///
-    /// # Errors
-    /// Returns an error if there was a network issue or an [`RconProtocolError`] for other failures.
-    pub async fn run_command(&mut self, command: &str) -> io::Result<String> {
+    async fn run_command_raw(&mut self, command: &str) -> io::Result<String> {
         let packet = RconPacket::new(1, RconPacketType::RunCommand, command.to_string())
             .map_err(Error::from)?;
 

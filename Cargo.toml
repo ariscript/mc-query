@@ -16,6 +16,7 @@ exclude = ["/test", "/resources"]
 [dependencies]
 async-trait = "0.1.68"
 bytes = { version = "1.4.0", features = ["serde"] }
+paste = "1.0.15"
 rand = "0.8.5"
 serde = { version = "1.0.160", features = ["derive"] }
 serde_json = "1.0.96"

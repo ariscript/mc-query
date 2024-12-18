@@ -113,3 +113,7 @@ impl From<QueryProtocolError> for io::Error {
         io::Error::new(ErrorKind::InvalidData, err)
     }
 }
+
+pub(crate) fn timeout_err<T>() -> io::Result<T> {
+    Err(io::Error::new(ErrorKind::TimedOut, "connection timed out"))
+}

@@ -1,5 +1,5 @@
 //! Enables remote command execution for minecraft servers.
-//! See the documentation for [`RconCLient`] for more information.
+//! See the documentation for [`RconClient`] for more information.
 
 mod client;
 mod packet;
