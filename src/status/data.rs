@@ -71,7 +71,7 @@ pub struct Version {
     ///
     /// See [the wiki.vg page](https://wiki.vg/Protocol_version_numbers) for a
     /// reference on what versions these correspond to.
-    pub protocol: u64,
+    pub protocol: i64,
 }
 
 /// Represents a chat object (the MOTD is sent as a chat object).
