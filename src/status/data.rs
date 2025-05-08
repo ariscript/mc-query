@@ -17,7 +17,7 @@ pub struct StatusResponse {
 
     /// The "motd" - message shown in the server list by the client.
     #[serde(rename = "description")]
-    pub motd: ChatObject,
+    pub motd: Option<ChatObject>,
 
     /// URI to the server's favicon.
     pub favicon: Option<String>,
